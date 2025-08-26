@@ -17,8 +17,8 @@ const registerUser = asyncHandler(async (req, res) => {
   // return response
   // return response
 
-  const { fullName, email, username, password } = req.body;
-  console.log("email: ", email);
+  const { fullName, email, username, password } = req.body || {};
+  // console.log("email: ", email);
 
   //begineer method
   // if (fullName === "") {
@@ -34,7 +34,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
   // can add more validation eg - for email - @
   // in production there are separate files for validation we usually call those methods from those files such as for email or password
-  const existedUser = User.findOne({
+  const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
 
@@ -43,7 +43,16 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+
+  let coverImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+  }
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is required");
@@ -56,14 +65,16 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Avatar file is required");
   }
 
-  const user = await User.create({
+  const user = new User({
     fullName,
     avatar: avatar.url,
-    cover: coverImage?.url || "",
+    coverImage: coverImage?.url || "",
     email,
     password,
     username: username.toLowerCase(),
   });
+
+  await user.save();
 
   const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
