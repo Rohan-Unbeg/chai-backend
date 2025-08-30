@@ -8,6 +8,7 @@ import {
   logoutUser,
   refreshAccessToken,
   registerUser,
+  updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
 } from "../controllers/user.controller.js";
